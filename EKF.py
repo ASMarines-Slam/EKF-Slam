@@ -7,14 +7,15 @@ class ExtendedKalmanFilterSLAM:
     def __init__(self, state, covariance,
                 robot_width, scanner_displacement,
                 control_motion_factor, control_turn_factor,
-                measurement_distance_stddev, measurement_angle_stddev):
+                measurement_distance_stddev, measurement_angle_stddev,):
                 self.state = state
                 self.covariance = covariance
                 self.scanner_displacement =scanner_displacement
                 self.control_motion_factor = control_motion_factor
                 self.control_turn_factor = control_turn_factor
                 self.measurement_distance_stddev = measurement_distance_stddev
-                self.measurement_angle_stddev=measurement_angle_stddev)
+                self.measurement_angle_stddev=measurement_angle_stddev
+                self.measurement_IMU_Error=measurement_IMU_Error
                 #for initig
                 self.number_of_landmarks=0
 
@@ -46,6 +47,53 @@ class ExtendedKalmanFilterSLAM:
 
         return array([r, alpha,velocity_in_x,velocity_in_y])
 
+    @staticmethod
+    def dh_dstate(state, landmark, scanner_displacement):
+        theta = state[2]
+        cost, sint = cos(theta), sin(theta)
+        dx = landmark[0] - (state[0] + scanner_displacement * cost)
+        dy = landmark[1] - (state[1] + scanner_displacement * sint)
+        q = dx * dx + dy * dy
+        sqrtq = sqrt(q)
+        drdx = -dx / sqrtq
+        drdy = -dy / sqrtq
+        drdtheta = (dx * sint - dy * cost) * scanner_displacement / sqrtq
+
+        #Extra to be discussed in the meeting
+        drdxdot=
+        drdydot=
+
+
+        dalphadx =  dy / q
+        dalphady = -dx / q
+        dalphadtheta = -1 - scanner_displacement / q * (dx * cost + dy * sint)
+
+        #Extra to be discussed in the meeting
+        dalphadxdot=
+        dalphadydot=
+
+
+        dvelocityx_dx=
+        dvelocityx_dy=0
+        dvelocityx_dtheta=
+        dvelocityx_dvelocityx=1
+        dvelocityx_dvelocityy=0
+
+        dvelocityy_dx=0
+        dvelocityy_dy=
+        dvelocityy_dtheta=
+        dvelocityy_dvelocityx=0
+        dvelocityy_dvelocityy=1
+
+
+
+        return array([[drdx, drdy, drdtheta, drdxdot , drdydot ],
+                     [dalphadx, dalphady, dalphadtheta,dalphadxdot,dalphadydot]
+                     [dvelocityx_dx,dvelocityx_dy,dvelocityx_dtheta,dvelocityx_dvelocityx,dvelocityx_dvelocityy]   
+                     [dvelocityy_dx,dvelocityy_dy,dvelocityy_dtheta,dvelocityy_dvelocityx,dvelocityy_dvelocityy]
+                     ])
+        #return array([[drdx, drdy, drdtheta],
+                      #[dalphadx, dalphady, dalphadtheta]])
 
     def correct(self, measurement, landmark_index):
         """The correction step of the Kalman filter."""
@@ -55,15 +103,23 @@ class ExtendedKalmanFilterSLAM:
 
         # --->>> Add your code here to set up the full H matrix.
         N = self.number_of_landmarks
-        new_H = zeros((2,5+2*N))
-        new_H[0:2,0:5] = H3
-        new_H[0:2, 5+2*landmark_index : 5+2*landmark_index+2] = new_H[0:2,0:2]*-1
+        
+        #because we have 4 measurements, the r, the theta, velocity from x , velocity from y
+        new_H = zeros((4,5+2*N))
+        #new_H = zeros((2,5+2*N))
+
+        new_H[0:4,0:5] = H5
+
+        # the added drevatives for that landmark
+        new_H[0:4, 5+2*landmark_index : 5+2*landmark_index+2] = new_H[0:4,0:2]*-1
 
         H = new_H  
 
         # This is the old code from the EKF - no modification necessary!
         Q = diag([self.measurement_distance_stddev**2,
-                  self.measurement_angle_stddev**2])
+                  self.measurement_angle_stddev**2,
+                  self.measurement_IMU_Error**2,
+                  self.measurement_IMU_Error**2])
         K = dot(self.covariance,
                 dot(H.T, linalg.inv(dot(H, dot(self.covariance, H.T)) + Q)))
         innovation = array(measurement) -\
@@ -95,7 +151,7 @@ control_motion_factor = 0.35  # Error in motor control.
 control_turn_factor = 0.6  # Additional error due to slip when turning.
 measurement_distance_stddev = 600.0  # Distance measurement error of cylinders.
 measurement_angle_stddev = 45. / 180.0 * pi  # Angle measurement error.
-
+measurement_IMU_Error=5
 
 # Arbitrary start position.
 # the initial state will be
@@ -115,7 +171,7 @@ kf = ExtendedKalmanFilterSLAM(initial_state, initial_covariance,
                             scanner_displacement,
                             control_motion_factor, control_turn_factor,
                             measurement_distance_stddev,
-                            measurement_angle_stddev)
+                            measurement_angle_stddev,measurement_IMU_Error)
 
 while not rospy.is_shutdown():
 
@@ -133,7 +189,7 @@ while not rospy.is_shutdown():
     #we here need to choose if we will update the velocities only if there are no 
     #measurments from the sensor node, or update them all together
 
-    
+
 
 
 
