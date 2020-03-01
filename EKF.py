@@ -121,7 +121,7 @@ class ExtendedKalmanFilterSLAM:
                   self.measurement_IMU_Error**2,
                   self.measurement_IMU_Error**2])
         K = dot(self.covariance,
-                dot(H.T, linalg.inv(dot(H, dot(self.covariance, H.T)) + Q)))
+                dot(H.T,    linalg.inv(dot(H, dot(self.covariance, H.T)) + Q)  ))
         innovation = array(measurement) -\
                      self.h(self.state, landmark, self.scanner_displacement)
         innovation[1] = (innovation[1] + pi) % (2*pi) - pi
