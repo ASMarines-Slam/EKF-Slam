@@ -1,6 +1,7 @@
 from ekf_ros_init import *
 from math import sin, cos, pi, atan2, sqrt
 from numpy import *
+from slam_library import *
 
 
 class ExtendedKalmanFilterSLAM:
@@ -129,7 +130,11 @@ class ExtendedKalmanFilterSLAM:
         self.covariance = dot(eye(size(self.state)) - dot(K, H),
                               self.covariance)
 
-    
+    def get_landmarks(self):
+        """Returns a list of (x, y) tuples of all discovered landmark positions."""
+        return ([(self.state[3 + 2 * j], self.state[3 + 2 * j + 1])
+                 for j in xrange(self.number_of_landmarks)])
+
 
     
 
