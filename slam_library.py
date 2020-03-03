@@ -10,6 +10,9 @@ def find_landmarks(scan):
 
 # .from "lego_robot.py"
 def scanner_to_world(pose, point):
+    """Given a robot pose (rx, ry, heading) and a point (x, y) in the
+               scanner's coordinate system, return the point's coordinates in the
+               world coordinate system."""
     pass
 
 
