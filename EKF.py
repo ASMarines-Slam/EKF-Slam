@@ -20,14 +20,85 @@ class ExtendedKalmanFilterSLAM:
                 #for initig
                 self.number_of_landmarks=0
 
-    def predict(self,control):
-        """The prediction step of the Kalman filter."""
-    
-    @staticmethod
-    def g(self):
+
+                
+    #@staticmethod
+    #def g(self):
 
         
-    def dg_dstate(self):
+    #def dg_dstate(self):
+        
+
+    def predict(self, x, y, xdot, ydot, control):
+         """The prediction step of the Kalman filter."""
+
+        # covariance' = G * covariance * GT + R
+
+        # where R = V * (covariance in control space) * VT.
+
+        # Covariance in control space depends on move distance.
+        #.zero for now
+        Dxx,Dyy,m,md = 0
+
+        G3 = array([[+/-(2*(Dxx/m+md)),      0,           0, 0],
+                    [0,                +/-(2*(Dyy/m+md)), 0, 0],
+                    [1,                     0,            0, 0],
+                    [0,                     1,            0, 0]]
+
+
+        #left_var = (self.control_motion_factor * left)**2 +\
+
+                   #(self.control_turn_factor * (left-right))**2
+
+        #right_var = (self.control_motion_factor * right)**2 +\
+
+                    #(self.control_turn_factor * (left-right))**2
+
+        #.zero for now
+        control_covariance = np.zeroes(shape=(6,6), type= float)
+        #.zero for now
+        V = np.zeroes(shape=(4,2), type= float)
+
+        R3 = dot(V, dot(control_covariance, V.T))
+
+        N = self.number_of_landmarks
+
+        N2 = N*2
+
+
+        #.zero for now
+        G = zeros((4+N2,4+N2))
+
+        G[0:4,0:4] = G3
+
+        G[4:,4:] = eye(N2)
+
+
+        #.zero for now
+        R = zeros((4+N2,4+N2))
+
+        R[0:4,0:4] = R3
+
+        
+
+        # Now enlarge G3 and R3 to accomodate all landmarks. Then, compute the
+
+        # new covariance matrix self.covariance.
+
+        #self.covariance = dot(G3, dot(self.covariance, G3.T)) + R3  # Replace this.
+
+        self.covariance = dot(G, dot(self.covariance, G.T)) + R
+
+        # state' = g(state, control)
+        #. to be discussed in meeting
+
+        new_state = 
+
+
+
+        self.state = hstack((new_state[:,],self.state[4:,]))
+
+        
 
     @staticmethod
     def h(state, landmark, scanner_displacement):
